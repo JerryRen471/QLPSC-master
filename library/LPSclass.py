@@ -4,11 +4,22 @@ from library import TNclass
 
 
 class LPS(TNclass.TensorNetwork):
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Initialize the LPS class by calling the parent TensorNetwork initializer.
+        """
         # Initialize Parameters
         TNclass.TensorNetwork.__init__(self)
 
-    def lps_regularization(self, regular_center):
+    def lps_regularization(self, regular_center: int) -> None:
+        """
+        Move the regularization center to the specified position in the tensor network.
+
+        Args:
+            regular_center (int): The target position for the regularization center. If -1, move to the last position.
+                If the current regular_center is 'unknown', initialize it to 0 and move to the end.
+                Otherwise, move the regular_center to the specified position by calling move_regular_center2next or move_regular_center2forward.
+        """
         if regular_center == -1:
             regular_center = self.tensor_info['n_length']-1
         if self.tensor_info['regular_center'] == 'unknown':
@@ -20,8 +31,16 @@ class LPS(TNclass.TensorNetwork):
         while self.tensor_info['regular_center'] > regular_center:
             self.move_regular_center2forward()
 
-    def move_regular_center2next(self):
-        tensor_index = self.tensor_info['regular_center']
+    def move_regular_center2next(self) -> None:
+        """
+        Move the regularization center one step to the right (next tensor).
+        Performs SVD on the merged tensor, truncates to the virtual bond dimension, and updates the tensors accordingly.
+
+        Updates:
+            - self.tensor_data: Updates the tensors at the current and next positions.
+            - self.tensor_info['regular_center']: Increments by 1.
+        """
+        tensor_index: int = self.tensor_info['regular_center']
         type = self.tensor_data[tensor_index].dtype
         device = self.tensor_data[tensor_index].device
         merged_tensor = tc.tensordot(self.tensor_data[tensor_index], self.tensor_data[tensor_index+1], ([3], [1]))
@@ -31,7 +50,7 @@ class LPS(TNclass.TensorNetwork):
         u, lm, v = np.linalg.svd(merged_tensor, full_matrices=False)
         u, lm, v = tc.from_numpy(u), tc.from_numpy(lm), tc.from_numpy(v)
         u, lm, v = u.to(dtype=type, device=device), lm.to(dtype=type, device=device), v.to(dtype=type, device=device)
-        bdm = min(self.tensor_info['virtual_bond'], len(lm))
+        bdm: int = min(self.tensor_info['virtual_bond'], len(lm))
         u = u[:, :bdm]
         lm = tc.diag(lm[:bdm])
         v = v[:bdm, :]
@@ -42,8 +61,16 @@ class LPS(TNclass.TensorNetwork):
         self.tensor_data[tensor_index + 1] = tc.transpose(self.tensor_data[tensor_index+1], 0, 1)
         self.tensor_info['regular_center'] += 1
 
-    def move_regular_center2forward(self):
-        tensor_index = self.tensor_info['regular_center']
+    def move_regular_center2forward(self) -> None:
+        """
+        Move the regularization center one step to the left (previous tensor).
+        Performs SVD on the merged tensor, truncates to the virtual bond dimension, and updates the tensors accordingly.
+
+        Updates:
+            - self.tensor_data: Updates the tensors at the current and previous positions.
+            - self.tensor_info['regular_center']: Decrements by 1.
+        """
+        tensor_index: int = self.tensor_info['regular_center']
         type = self.tensor_data[tensor_index].dtype
         device = self.tensor_data[tensor_index].device
         merged_tensor = tc.tensordot(self.tensor_data[tensor_index-1], self.tensor_data[tensor_index], ([3], [1]))
@@ -53,7 +80,7 @@ class LPS(TNclass.TensorNetwork):
         u, lm, v = np.linalg.svd(merged_tensor, full_matrices=False)
         u, lm, v = tc.from_numpy(u), tc.from_numpy(lm), tc.from_numpy(v)
         u, lm, v = u.to(dtype=type, device=device), lm.to(dtype=type, device=device), v.to(dtype=type, device=device)
-        bdm = min(self.tensor_info['virtual_bond'], len(lm))
+        bdm: int = min(self.tensor_info['virtual_bond'], len(lm))
         u = u[:, :bdm]
         lm = tc.diag(lm[:bdm])
         v = v[:bdm, :]
