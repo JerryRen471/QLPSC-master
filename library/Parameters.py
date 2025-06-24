@@ -1,4 +1,5 @@
 import torch as tc
+import os
 
 
 def gtn(para=dict()):
@@ -26,9 +27,14 @@ def gtn(para=dict()):
     para['converge_type'] = 'cost function'
     para['converge_accuracy'] = 2e-5  # 1e-4
     # Path
-    para['load_state_path'] = '/Users/wenjun/code/Data/target_state/Rand_large/chain%d/state%d_normal_1_3_0.pr' % (para['retained_feature'], para['retained_feature'])
-    para['data_path'] = '/Users/wenjun/code/Data/Random_Glps/chain%d/normal_1_3_0/Nm_noCounter/' % (para['retained_feature'])
-    para['save_result_path'] = '/Users/wenjun/code/Result/Random_Glps/chain%d/normal_1_3_0/' % (para['retained_feature'])
+    para['load_state_path'] = './Data/target_state/Rand_large/chain%d/state%d_normal_1_3_0.pr' % (para['retained_feature'], para['retained_feature'])
+    para['data_path'] = './Data/Random_Glps/chain%d/normal_1_3_0/Nm_noCounter/' % (para['retained_feature'])
+    para['save_result_path'] = './Result/Random_Glps/chain%d/normal_1_3_0/' % (para['retained_feature'])
+
+    os.makedirs(para['load_state_path'], exist_ok=True)
+    os.makedirs(para['data_path'], exist_ok=True)
+    os.makedirs(para['save_result_path'], exist_ok=True)
+    
     return para
 
 
